@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<title>Lista de Compras</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Lista de compras bilingue (PT/EN), funciona offline.">
+<meta name="theme-color" content="#1f7a4d" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121613" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Compras">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d2420;--mu:#6b756e;--ac:#1f7a4d;--acx:#fff;--bd:#e2e0d9;--wa:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121613;--card:#1b211d;--tx:#eef1ee;--mu:#8f9a92;--ac:#4cc58a;--acx:#0b1a11;--bd:#2b332d;--wa:#ff7b6b}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:90px;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:12px}
+.hd{display:flex;align-items:center;gap:8px}
+h1{font-size:20px;margin:6px 0 10px;flex:1}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;padding:10px 4px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font-size:14px}
+.tabs button.on{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+.row{display:flex;gap:6px;align-items:center}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%}
+input:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--ac);color:var(--acx);border:0;border-radius:10px;padding:10px 14px;font-weight:600}
+.ghost{background:transparent;border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:8px 10px}
+.ghost.warn{border-color:var(--wa);color:var(--wa);font-weight:600}
+.sec{background:var(--card);border:1px solid var(--bd);border-radius:14px;margin:12px 0;overflow:hidden}
+.sec h2{font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin:0;padding:10px 12px;color:var(--mu);display:flex;justify-content:space-between}
+.secf{border-color:var(--ac)}
+.secf .fb{padding:0 12px 12px}
+.secf label:first-child{margin-top:0}
+.hint{display:block;color:var(--mu);font-size:13px;margin-top:8px}
+.it{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--bd)}
+.chk{width:28px;height:28px;border-radius:50%;border:2px solid var(--ac);background:none;flex:none;color:var(--acx);font-size:16px;line-height:1}
+.it.done .chk{background:var(--ac)}
+.it.done .nm{text-decoration:line-through;color:var(--mu)}
+.nm{flex:1;min-width:0}
+.nm b{font-weight:600}.nm small{display:block;color:var(--mu)}
+.pr{text-align:right;font-size:14px;color:var(--mu);white-space:nowrap}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;font-size:14px}
+.bar b{font-size:17px}
+.empty{color:var(--mu);text-align:center;padding:30px 10px}
+dialog{border:1px solid var(--bd);border-radius:16px;background:var(--bg);color:var(--tx);width:min(92vw,420px);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+.mic.rec{background:var(--wa);color:#fff;border-color:var(--wa);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.6}}
+#toast{position:fixed;left:12px;right:12px;bottom:70px;max-width:536px;margin:0 auto;background:var(--tx);color:var(--bg);padding:12px;border-radius:12px;z-index:9;font-size:14px;display:none}
+#inst{display:none;font-size:13px;padding:6px 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hd"><h1>🛒 Lista de Compras · Shopping List</h1><button class="ghost" id="inst">⤓ Instalar</button></div>
+<div class="tabs" id="tabs"></div>
+<div id="view"></div>
+</div>
+<div class="bar"><span>🧺 <b id="tc">0,00 €</b> <span id="tcl"></span></span><span>Total <b id="tt">0,00 €</b></span></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlg"></dialog>
+
+<script>
+const DICT=`maçã=apple=fv;banana=banana=fv;laranja=orange=fv;limão=lemon=fv;tomate=tomato=fv;cebola=onion=fv;alho=garlic=fv;batata=potato=fv;cenoura=carrot=fv;alface=lettuce=fv;pimento=bell pepper=fv;courgette=zucchini=fv;uvas=grapes=fv;morangos=strawberries=fv;pão=bread=pad;pão de forma=sliced bread=pad;croissant=croissant=pad;bolo=cake=pad;frango=chicken=talho;carne picada=minced meat=talho;bife=steak=talho;porco=pork=talho;salmão=salmon=peix;bacalhau=salted cod=peix;camarão=shrimp=peix;atum=tuna=peix;fiambre=sliced ham=char;queijo=cheese=char;presunto=cured ham=char;chouriço=chorizo=char;leite=milk=lat;iogurte=yogurt=lat;manteiga=butter=lat;ovos=eggs=lat;natas=cream=lat;gelado=ice cream=cong;pizza congelada=frozen pizza=cong;ervilhas congeladas=frozen peas=cong;arroz=rice=merc;massa=pasta=merc;azeite=olive oil=merc;açúcar=sugar=merc;farinha=flour=merc;café=coffee=merc;cereais=cereal=merc;bolachas=biscuits=merc;sal=salt=merc;feijão=beans=merc;água=water=beb;sumo=juice=beb;vinho=wine=beb;cerveja=beer=beb;refrigerante=soda=beb;detergente=detergent=lim;lixívia=bleach=lim;papel de cozinha=paper towels=lim;sacos do lixo=trash bags=lim;papel higiénico=toilet paper=hig;champô=shampoo=hig;pasta de dentes=toothpaste=hig;sabonete=soap=hig`.split(';').map(s=>{const[p,e,c]=s.split('=');return{pt:p,en:e,sec:c}});
+const DEF=[['fv','Frutas e Legumes','Fruit & Veg'],['pad','Padaria','Bakery'],['talho','Talho','Butcher'],['peix','Peixaria','Fish'],['char','Charcutaria e Queijos','Deli & Cheese'],['lat','Laticínios','Dairy'],['cong','Congelados','Frozen'],['merc','Mercearia','Grocery'],['beb','Bebidas','Drinks'],['lim','Limpeza','Cleaning'],['hig','Higiene','Hygiene']];
+let S;try{S=JSON.parse(localStorage.getItem('pd')||'null')}catch(e){}
+if(!S)S={sections:DEF.map(d=>({id:d[0],pt:d[1],en:d[2]})),items:[],usual:[]};
+let tab='list',secEdit=null,rec=null;
+const save=()=>{try{localStorage.setItem('pd',JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+const eur=n=>n.toFixed(2).replace('.',',')+' €';
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const secName=s=>s.pt+(s.en?' · '+s.en:'');
+
+function find(t){const n=norm(t);if(!n)return null;
+  const hit=v=>S.usual.find(x=>norm(x.pt)===v||norm(x.en)===v)||DICT.find(x=>norm(x.pt)===v||norm(x.en)===v);
+  let r=hit(n);if(r)return r;
+  // singular/plural fallback: "laranjas"→laranja, "limões"→limão, "uva"→uvas
+  for(const v of[n.replace(/oes$/,'ao'),n.replace(/aes$/,'ao'),n.replace(/es$/,''),n.replace(/s$/,''),n+'s'])if(v!==n&&(r=hit(v)))return r;
+  return null}
+function addItem(text,secId,qty=1){
+  text=text.trim();if(!text)return;
+  const f=find(text);
+  const pt=f?f.pt:text.charAt(0).toUpperCase()+text.slice(1);
+  const ex=S.items.find(i=>!i.done&&norm(i.pt)===norm(pt));
+  if(ex){ex.qty+=qty;save();render();return}
+  const sec=(secId&&secId!=='auto'?secId:(f&&S.sections.some(s=>s.id===f.sec)?f.sec:S.sections[0].id));
+  S.items.push({id:uid(),sec,pt,en:f?f.en:'',qty,price:f&&f.price?f.price:0,note:'',done:false});
+  save();render()}
+
+function render(){
+  $('tabs').innerHTML=[['list','Lista · List'],['usual','Habituais · Usual'],['sec','Secções · Aisles']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="tab='${t[0]}';secEdit=null;render()">${t[1]}</button>`).join('');
+  $('view').innerHTML=tab==='list'?vList():tab==='usual'?vUsual():vSec();
+  const tot=S.items.reduce((a,i)=>a+i.qty*i.price,0),cart=S.items.filter(i=>i.done).reduce((a,i)=>a+i.qty*i.price,0);
+  $('tt').textContent=eur(tot);$('tc').textContent=eur(cart);$('tcl').textContent=S.items.filter(i=>i.done).length+'/'+S.items.length;
+  if(tab==='sec'&&secEdit!==null){const f=$('sp');if(f){f.focus();f.closest('form').scrollIntoView({block:'nearest'})}}
+}
+function vList(){
+  const opts=S.sections.map(s=>`<option value="${s.id}">${esc(secName(s))}</option>`).join('');
+  const dl=[...S.usual,...DICT].map(x=>`<option value="${esc(x.pt)}">${esc(x.en)}</option>`).join('');
+  let h=`<div class="row"><input id="ni" list="dl" placeholder="Adicionar · Add item…" autocomplete="off" enterkeyhint="done" onkeydown="if(event.key==='Enter')go()"><button class="ghost mic ${rec?'rec':''}" id="mic" aria-label="Ditar · Dictate" onclick="voice()">🎤</button><button class="btn" aria-label="Adicionar · Add" onclick="go()">+</button></div>
+  <datalist id="dl">${dl}</datalist>
+  <select id="ns" style="margin-top:6px"><option value="auto">Secção automática · Auto aisle</option>${opts}</select>`;
+  if(!S.items.length)h+=`<div class="empty">Lista vazia · Empty list<br><small>Escreva, fale ou use os Habituais.</small></div>`;
+  S.sections.forEach(s=>{
+    const its=S.items.filter(i=>i.sec===s.id).sort((a,b)=>a.done-b.done);
+    if(!its.length)return;
+    h+=`<div class="sec"><h2><span>${esc(secName(s))}</span><span>${its.filter(i=>i.done).length}/${its.length}</span></h2>`+its.map(i=>`<div class="it ${i.done?'done':''}"><button class="chk" onclick="tog('${i.id}')">${i.done?'✓':''}</button><div class="nm" onclick="edit('${i.id}')"><b>${i.qty>1?i.qty+'× ':''}${esc(i.pt)}</b>${i.en?`<small>${esc(i.en)}</small>`:''}${i.note?`<small>📝 ${esc(i.note)}</small>`:''}</div><div class="pr">${i.price?eur(i.qty*i.price):''}</div></div>`).join('')+`</div>`;
+  });
+  if(S.items.some(i=>i.done))h+=`<button class="ghost" style="width:100%" onclick="clearDone()">Limpar comprados · Clear bought</button>`;
+  return h}
+function vUsual(){
+  if(!S.usual.length)return`<div class="empty">Ainda sem habituais.<br>Abra um item na lista e escolha ★.<br><small>No usual items yet. Open an item and tap ★.</small></div>`;
+  return S.usual.map((u,i)=>`<div class="sec"><div class="it" style="border:0"><div class="nm"><b>${esc(u.pt)}</b>${u.en?`<small>${esc(u.en)}</small>`:''}</div><div class="pr">${u.price?eur(u.price):''}</div><button class="btn" onclick="addU(${i})">+</button><button class="ghost" onclick="S.usual.splice(${i},1);save();render()">✕</button></div></div>`).join('')}
+
+/* ---------- Aisles: in-page forms instead of prompt() ---------- */
+function vSec(){
+  return`<p style="color:var(--mu);margin-top:0">Ordene pela sua rota na loja. · Order by your walking route.</p>`+
+  S.sections.map((s,i)=>secEdit===i?secForm(i,s):`<div class="sec"><div class="it" style="border:0"><div class="nm"><b>${i+1}. ${esc(s.pt)}</b><small>${esc(s.en)}</small></div><button class="ghost" aria-label="Subir · Up" onclick="mv(${i},-1)">▲</button><button class="ghost" aria-label="Descer · Down" onclick="mv(${i},1)">▼</button><button class="ghost" aria-label="Editar · Edit" onclick="secEdit=${i};render()">✎</button></div></div>`).join('')+
+  (secEdit==='new'?secForm('new',{pt:'',en:''}):`<button class="btn" style="width:100%" onclick="secEdit='new';render()">+ Nova secção · New aisle</button>`)}
+function secForm(i,s){
+  const isNew=i==='new',k=isNew?"'new'":i;
+  const cnt=isNew?0:S.items.filter(x=>x.sec===s.id).length;
+  const canDel=!isNew&&S.sections.length>1;
+  return`<form class="sec secf" onsubmit="saveSec(event,${k})" autocomplete="off">
+  <h2>${isNew?'Nova secção · New aisle':'Editar secção · Edit aisle'}</h2>
+  <div class="fb"><label for="sp">Nome (PT)</label><input id="sp" name="pt" required maxlength="40" value="${esc(s.pt)}" placeholder="ex.: Bio e Dietéticos">
+  <label for="se">Name (EN) · opcional</label><input id="se" name="en" maxlength="40" value="${esc(s.en)}" placeholder="e.g. Organic">
+  <div class="row" style="margin-top:12px">${canDel?`<button type="button" class="ghost" aria-label="Apagar · Delete" onclick="delSec(${i},this)">🗑</button>`:''}<button type="button" class="ghost" onclick="secEdit=null;render()">Cancelar · Cancel</button><button class="btn" style="flex:1">Guardar · Save</button></div>
+  ${cnt&&canDel?`<small class="hint">Se apagar, ${cnt} ${cnt>1?'itens passam':'item passa'} para «${esc(S.sections[i===0?1:0].pt)}». · Deleting moves ${cnt} item(s) to that aisle.</small>`:''}</div></form>`}
+function saveSec(e,i){
+  e.preventDefault();const f=e.target.elements;
+  const pt=f.pt.value.trim(),en=f.en.value.trim();if(!pt){f.pt.focus();return}
+  if(i==='new')S.sections.push({id:uid(),pt,en});else Object.assign(S.sections[i],{pt,en});
+  secEdit=null;save();render()}
+function delSec(i,b){
+  if(!b.dataset.c){b.dataset.c=1;b.textContent='Apagar? · Delete?';b.classList.add('warn');return}
+  const s=S.sections[i],to=S.sections[i===0?1:0].id;
+  S.items.forEach(x=>{if(x.sec===s.id)x.sec=to});S.usual.forEach(x=>{if(x.sec===s.id)x.sec=to});
+  S.sections.splice(i,1);secEdit=null;save();render()}
+function mv(i,d){const j=i+d;if(j<0||j>=S.sections.length)return;[S.sections[i],S.sections[j]]=[S.sections[j],S.sections[i]];save();render()}
+
+function go(){const i=$('ni');addItem(i.value,$('ns').value);const n=$('ni');n.value='';n.focus()}
+function tog(id){const i=S.items.find(x=>x.id===id);i.done=!i.done;save();render()}
+function clearDone(){S.items=S.items.filter(i=>!i.done);save();render()}
+function addU(i){const u=S.usual[i];S.items.push({id:uid(),sec:S.sections.some(s=>s.id===u.sec)?u.sec:S.sections[0].id,pt:u.pt,en:u.en||'',qty:1,price:u.price||0,note:'',done:false});save();render();say('+ '+u.pt)}
+
+function edit(id){
+  const i=S.items.find(x=>x.id===id),d=$('dlg');
+  const isU=S.usual.some(u=>norm(u.pt)===norm(i.pt));
+  d.innerHTML=`<label>Português</label><input id="e1" value="${esc(i.pt)}"><label>English</label><input id="e2" value="${esc(i.en)}">
+  <div class="row"><div><label>Qtd · Qty</label><input id="e3" type="number" inputmode="numeric" min="1" step="1" value="${i.qty}"></div><div><label>Preço · Price (€)</label><input id="e4" type="number" inputmode="decimal" min="0" step="0.01" value="${i.price||''}"></div></div>
+  <label>Secção · Aisle</label><select id="e5">${S.sections.map(s=>`<option value="${s.id}" ${s.id===i.sec?'selected':''}>${esc(secName(s))}</option>`).join('')}</select>
+  <label>Nota · Note</label><input id="e6" value="${esc(i.note)}">
+  <div class="row" style="margin-top:14px"><button class="ghost" onclick="del('${id}')">🗑</button><button class="ghost" id="st">${isU?'★':'☆'}</button><button class="btn" style="flex:1" onclick="ok('${id}')">OK</button></div>`;
+  d.dataset.u=isU?1:0;$('st').onclick=()=>{d.dataset.u=d.dataset.u==='1'?0:1;$('st').textContent=d.dataset.u==='1'?'★':'☆'};
+  d.showModal()}
+function ok(id){
+  const i=S.items.find(x=>x.id===id),d=$('dlg');
+  i.pt=$('e1').value.trim()||i.pt;i.en=$('e2').value.trim();i.qty=Math.max(1,parseInt($('e3').value)||1);i.price=parseFloat(String($('e4').value).replace(',','.'))||0;i.sec=$('e5').value;i.note=$('e6').value.trim();
+  const k=S.usual.findIndex(u=>norm(u.pt)===norm(i.pt));
+  if(d.dataset.u==='1'){const u={pt:i.pt,en:i.en,sec:i.sec,price:i.price};k>=0?S.usual[k]=u:S.usual.push(u)}else if(k>=0)S.usual.splice(k,1);
+  save();d.close();render()}
+function del(id){S.items=S.items.filter(x=>x.id!==id);save();$('dlg').close();render()}
+
+function say(m,ms=6000){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',ms)}
+
+/* ---------- Voice (pt-PT), tuned for Chrome on Android ---------- */
+const NUM={um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10,doze:12};
+// "leite ovos pão de forma" (Android rarely adds commas) → ["leite","ovos","pão de forma"],
+// but only when every word is a known item; otherwise keep the phrase whole.
+function greedy(w){if(w.length<2)return null;const r=[];let i=0;
+  while(i<w.length){let j=w.length;for(;j>i;j--)if(find(w.slice(i,j).join(' ')))break;if(j===i)return null;r.push(w.slice(i,j).join(' '));i=j}
+  return r.length>1?r:null}
+function parseSpoken(t){const out=[];
+  t.split(/\s*[,;]\s*|\s+(?:e|mais|and)\s+/i).forEach(ch=>{
+    ch=ch.trim().replace(/[.!?]+$/,'');if(!ch)return;
+    const w=ch.split(/\s+/);let q=1;const n=norm(w[0]);
+    if(w.length>1&&/^\d{1,2}$/.test(n)){q=+n;w.shift()}else if(w.length>1&&NUM[n]){q=NUM[n];w.shift()}
+    const g=greedy(w);if(g)g.forEach((p,k)=>out.push([p,k?1:q]));else out.push([w.join(' '),q]);
+  });return out}
+function setMic(on){const b=$('mic');if(b)b.classList.toggle('rec',on)}
+async function askMic(){
+  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());
+    say('Microfone autorizado ✓ Toque 🎤 outra vez. · Mic allowed, tap 🎤 again.')}
+  catch(e){say('Microfone bloqueado. No Chrome: ⋮ → Definições → Definições de sites → Microfone → permitir este site. · Mic blocked: allow it in Chrome site settings.',12000)}}
+function voice(lang='pt-PT'){
+  if(rec){rec.stop();return}                       // second tap = stop
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!R){say('Voz não suportada neste navegador. Use o 🎤 do teclado. · Voice not supported here; use the keyboard 🎤.');return}
+  if(!window.isSecureContext){say('A voz só funciona com https://. Abra a app pelo link publicado. · Voice needs https.');return}
+  const r=new R();rec=r;let got=false,err=null;
+  r.lang=lang;r.continuous=false;r.interimResults=false;r.maxAlternatives=1;
+  r.onstart=()=>{setMic(true);say('A ouvir… diga os itens · Listening… say the items',15000)};
+  r.onresult=e=>{
+    for(let k=e.resultIndex;k<e.results.length;k++){const res=e.results[k];if(!res.isFinal)continue;
+      const t=res[0].transcript.trim();if(!t)continue;got=true;
+      const items=parseSpoken(t);items.forEach(([x,q])=>addItem(x,'auto',q));
+      say('Ouvi · Heard: «'+t+'» → '+items.map(([x,q])=>(q>1?q+'× ':'')+x).join(', '))}};
+  r.onerror=e=>{err=e.error;
+    if(e.error==='language-not-supported'&&lang==='pt-PT'){rec=null;setTimeout(()=>voice('pt'),0);return}
+    if(e.error==='not-allowed'){askMic();return}
+    const m={'no-speech':'Não ouvi nada, toque 🎤 e fale logo. · Didn’t hear anything, try again.',
+      'aborted':'',
+      'audio-capture':'Microfone ocupado ou indisponível (feche outras apps que o usem). · Mic busy or unavailable.',
+      'network':'A voz precisa de internet. Sem rede, use o teclado. · Voice needs internet.',
+      'service-not-allowed':'Serviço de voz indisponível. Verifique que a app Google está ativa (Definições → Aplicações → Google). · Speech service unavailable; enable the Google app.'};
+    const msg=e.error in m?m[e.error]:'Erro de voz · Voice error: '+e.error;if(msg)say(msg,9000)};
+  r.onend=()=>{if(rec===r)rec=null;setMic(false);if(!got&&!err)say('Não ouvi nada, tente de novo. · Didn’t catch that, try again.')};
+  try{r.start()}catch(e){rec=null;setMic(false);say('Erro · Error: '+e.message)}}
+
+/* ---------- PWA: offline + install ---------- */
+if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+let instEv=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;$('inst').style.display='block'});
+$('inst').onclick=async()=>{if(!instEv)return;instEv.prompt();await instEv.userChoice.catch(()=>{});instEv=null;$('inst').style.display='none'};
+addEventListener('appinstalled',()=>{$('inst').style.display='none';say('Instalada ✓ · Installed')});
+render();
+</script>
+</body>
+</html>
