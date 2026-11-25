@@ -266,9 +266,11 @@ const toDoc=()=>({v:1,sections:S.sections,usual:S.usual,items:Object.fromEntries
 
 const m=location.hash.match(/[#&]l=([A-Za-z0-9]{20,})/);
 let id=localStorage.getItem('pd-list'),joined=false;
-if(m){joined=m[1]!==id;id=m[1];localStorage.setItem('pd-list',id);history.replaceState(null,'',location.pathname)}
+if(m){joined=m[1]!==id;id=m[1];localStorage.setItem('pd-list',id)}
 const ref=()=>doc(db,'lists',id);
 if(!id){id=newId();localStorage.setItem('pd-list',id);setDoc(ref(),toDoc()).catch(fail)}
+// keep the list code in the address bar, so copying the URL from there also shares this list
+history.replaceState(null,'',location.pathname+'#l='+id);
 $('shr').style.display='block';
 
 const sy=$('sy');
