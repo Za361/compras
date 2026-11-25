@@ -31,6 +31,8 @@ input:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px}
 button{font:inherit;cursor:pointer}
 .btn{background:var(--ac);color:var(--acx);border:0;border-radius:10px;padding:10px 14px;font-weight:600}
 .ghost{background:transparent;border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:8px 10px}
+.ghost.on{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+.az{flex:none;white-space:nowrap;padding:10px 12px}
 .ghost.warn{border-color:var(--wa);color:var(--wa);font-weight:600}
 .sec{background:var(--card);border:1px solid var(--bd);border-radius:14px;margin:12px 0;overflow:hidden}
 .sec h2{font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin:0;padding:10px 12px;color:var(--mu);display:flex;justify-content:space-between}
@@ -79,6 +81,9 @@ if(!S)S={sections:DEF.map(d=>({id:d[0],pt:d[1],en:d[2]})),items:[],usual:[]};
 S.items.forEach((i,k)=>{if(!i.t)i.t=Date.now()+k});
 if(!S.learn)S.learn={};   // name → aisle, learned when you move an item to another aisle
 let tab='list',secEdit=null,rec=null;
+// A–Z inside each aisle (otherwise order added). Saved per phone.
+let sortAZ=false;try{sortAZ=localStorage.getItem('pd-az')==='1'}catch(e){}
+function toggleAZ(){sortAZ=!sortAZ;try{localStorage.setItem('pd-az',sortAZ?'1':'0')}catch(e){}render(true);say(sortAZ?'Itens por ordem alfabética · Items sorted A–Z':'Itens pela ordem em que foram adicionados · Items in the order added',3000)}
 const save=()=>{try{localStorage.setItem('pd',JSON.stringify(S))}catch(e){}};
 // Remote sync hooks: no-ops until the Firebase module below connects (app still works fully offline/local).
 const R={item(){},del(){},field(){}};
@@ -150,10 +155,10 @@ function vList(){
   const dl=[...S.usual,...DICT].map(x=>`<option value="${esc(x.pt)}">${esc(x.en)}</option>`).join('');
   let h=`<div class="row"><input id="ni" list="dl" placeholder="Adicionar · Add item…" autocomplete="off" enterkeyhint="done" onkeydown="if(event.key==='Enter')go()"><button class="ghost mic ${rec?'rec':''}" id="mic" aria-label="Ditar · Dictate" onclick="voice()">🎤</button><button class="btn" aria-label="Adicionar · Add" onclick="go()">+</button></div>
   <datalist id="dl">${dl}</datalist>
-  <select id="ns" style="margin-top:6px"><option value="auto">Secção automática · Auto aisle</option>${opts}</select>`;
+  <div class="row" style="margin-top:6px"><select id="ns"><option value="auto">Secção automática · Auto aisle</option>${opts}</select><button class="ghost az ${sortAZ?'on':''}" aria-pressed="${sortAZ}" title="Ordenar A–Z dentro de cada secção · Sort A–Z within each aisle" onclick="toggleAZ()">A–Z</button></div>`;
   if(!S.items.length)h+=`<div class="empty">Lista vazia · Empty list<br><small>Escreva, fale ou use os Habituais.</small></div>`;
   S.sections.forEach(s=>{
-    const its=S.items.filter(i=>i.sec===s.id).sort((a,b)=>a.done-b.done);
+    const its=S.items.filter(i=>i.sec===s.id).sort((a,b)=>a.done-b.done||(sortAZ?a.pt.localeCompare(b.pt,'pt',{sensitivity:'base',numeric:true}):0));
     if(!its.length)return;
     h+=`<div class="sec"><h2><span>${esc(secName(s))}</span><span>${its.filter(i=>i.done).length}/${its.length}</span></h2>`+its.map(i=>`<div class="it ${i.done?'done':''}"><button class="chk" onclick="tog('${i.id}')">${i.done?'✓':''}</button><div class="nm" onclick="edit('${i.id}')"><b>${i.qty>1?i.qty+'× ':''}${esc(i.pt)}</b>${i.en?`<small>${esc(i.en)}</small>`:''}${i.note?`<small>📝 ${esc(i.note)}</small>`:''}</div><div class="pr">${i.price?eur(i.qty*i.price):''}</div></div>`).join('')+`</div>`;
   });
