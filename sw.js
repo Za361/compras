@@ -1,7 +1,7 @@
 // Offline support: serve everything from cache first (fast with bad signal in the shop),
 // refresh the cache in the background so updates appear on the next launch.
 // Bump VERSION whenever you change any file, to force a clean re-cache.
-const VERSION = 'compras-v5';
+const VERSION = 'compras-v6';
 const SDK = 'https://www.gstatic.com/firebasejs/13.2.0/';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
   SDK + 'firebase-app.js', SDK + 'firebase-firestore.js'];
