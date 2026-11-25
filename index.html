@@ -72,11 +72,12 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 <dialog id="dlg"></dialog>
 
 <script>
-const DICT=`maçã=apple=fv;banana=banana=fv;laranja=orange=fv;limão=lemon=fv;tomate=tomato=fv;cebola=onion=fv;alho=garlic=fv;batata=potato=fv;cenoura=carrot=fv;alface=lettuce=fv;pimento=bell pepper=fv;courgette=zucchini=fv;uvas=grapes=fv;morangos=strawberries=fv;pão=bread=pad;pão de forma=sliced bread=pad;croissant=croissant=pad;bolo=cake=pad;frango=chicken=talho;carne picada=minced meat=talho;bife=steak=talho;porco=pork=talho;salmão=salmon=peix;bacalhau=salted cod=peix;camarão=shrimp=peix;atum=tuna=peix;fiambre=sliced ham=char;queijo=cheese=char;presunto=cured ham=char;chouriço=chorizo=char;leite=milk=lat;iogurte=yogurt=lat;manteiga=butter=lat;ovos=eggs=lat;natas=cream=lat;gelado=ice cream=cong;pizza congelada=frozen pizza=cong;ervilhas congeladas=frozen peas=cong;arroz=rice=merc;massa=pasta=merc;azeite=olive oil=merc;açúcar=sugar=merc;farinha=flour=merc;café=coffee=merc;cereais=cereal=merc;bolachas=biscuits=merc;sal=salt=merc;feijão=beans=merc;água=water=beb;sumo=juice=beb;vinho=wine=beb;cerveja=beer=beb;refrigerante=soda=beb;detergente=detergent=lim;lixívia=bleach=lim;papel de cozinha=paper towels=lim;sacos do lixo=trash bags=lim;papel higiénico=toilet paper=hig;champô=shampoo=hig;pasta de dentes=toothpaste=hig;sabonete=soap=hig`.split(';').map(s=>{const[p,e,c]=s.split('=');return{pt:p,en:e,sec:c}});
+const DICT=`maçã=apple=fv;pera=pear=fv;banana=banana=fv;laranja=orange=fv;tangerina=tangerine=fv;limão=lemon=fv;lima=lime=fv;ananás=pineapple=fv;manga=mango=fv;kiwi=kiwi=fv;melão=melon=fv;melancia=watermelon=fv;uvas=grapes=fv;morangos=strawberries=fv;mirtilos=blueberries=fv;framboesas=raspberries=fv;pêssego=peach=fv;ameixa=plum=fv;cerejas=cherries=fv;abacate=avocado=fv;tomate=tomato=fv;tomate cherry=cherry tomatoes=fv;cebola=onion=fv;alho=garlic=fv;batata=potato=fv;batata doce=sweet potato=fv;cenoura=carrot=fv;alface=lettuce=fv;rúcula=rocket=fv;salada=salad=fv;espinafres=spinach=fv;couve=cabbage=fv;brócolos=broccoli=fv;couve-flor=cauliflower=fv;pimento=bell pepper=fv;pepino=cucumber=fv;courgette=zucchini=fv;beringela=aubergine=fv;cogumelos=mushrooms=fv;abóbora=pumpkin=fv;alho francês=leek=fv;feijão verde=green beans=fv;salsa=parsley=fv;coentros=coriander=fv;hortelã=mint=fv;gengibre=ginger=fv;fruta=fruit=fv;legumes=vegetables=fv;pão=bread=pad;pão de forma=sliced bread=pad;pão integral=wholemeal bread=pad;broa=corn bread=pad;carcaças=bread rolls=pad;baguete=baguette=pad;croissant=croissant=pad;bolo=cake=pad;bolos=pastries=pad;pastel de nata=custard tart=pad;tostas=toasts=pad;frango=chicken=talho;peito de frango=chicken breast=talho;coxas de frango=chicken thighs=talho;peru=turkey=talho;carne picada=minced meat=talho;carne=meat=talho;bife=steak=talho;vaca=beef=talho;porco=pork=talho;costeletas=chops=talho;entrecosto=ribs=talho;lombo=pork loin=talho;salsichas=sausages=talho;hambúrguer=burger=talho;borrego=lamb=talho;peixe=fish=peix;salmão=salmon=peix;bacalhau=salted cod=peix;camarão=shrimp=peix;gambas=prawns=peix;atum fresco=fresh tuna=peix;pescada=hake=peix;dourada=sea bream=peix;robalo=sea bass=peix;sardinhas=sardines=peix;carapau=horse mackerel=peix;polvo=octopus=peix;lulas=squid=peix;choco=cuttlefish=peix;mexilhão=mussels=peix;amêijoas=clams=peix;fiambre=sliced ham=char;queijo=cheese=char;queijo flamengo=edam cheese=char;queijo ralado=grated cheese=char;mozzarella=mozzarella=char;presunto=cured ham=char;chouriço=chorizo=char;mortadela=mortadella=char;salame=salami=char;peito de peru=sliced turkey=char;bacon=bacon=char;paio=cured pork loin=char;leite=milk=lat;leite magro=skimmed milk=lat;leite meio gordo=semi-skimmed milk=lat;bebida vegetal=plant milk=lat;leite de aveia=oat milk=lat;iogurte=yogurt=lat;iogurte grego=greek yogurt=lat;manteiga=butter=lat;margarina=margarine=lat;ovos=eggs=lat;natas=cream=lat;queijo fresco=fresh cheese=lat;requeijão=ricotta=lat;kefir=kefir=lat;sobremesa=dessert=lat;gelado=ice cream=cong;gelados=ice creams=cong;pizza congelada=frozen pizza=cong;pizza=pizza=cong;ervilhas=peas=cong;douradinhos=fish fingers=cong;lasanha=lasagne=cong;arroz=rice=merc;massa=pasta=merc;esparguete=spaghetti=merc;azeite=olive oil=merc;óleo=oil=merc;vinagre=vinegar=merc;açúcar=sugar=merc;farinha=flour=merc;fermento=baking powder=merc;café=coffee=merc;cápsulas=coffee capsules=merc;chá=tea=merc;cereais=cereal=merc;aveia=oats=merc;bolachas=biscuits=merc;sal=salt=merc;pimenta=pepper=merc;especiarias=spices=merc;caldo=stock cubes=merc;feijão=beans=merc;grão=chickpeas=merc;lentilhas=lentils=merc;atum=tuna=merc;sardinhas em lata=tinned sardines=merc;polpa de tomate=tomato puree=merc;ketchup=ketchup=merc;maionese=mayonnaise=merc;mostarda=mustard=merc;azeitonas=olives=merc;compota=jam=merc;mel=honey=merc;chocolate=chocolate=merc;cacau=cocoa=merc;batatas fritas=crisps=merc;frutos secos=nuts=merc;amendoins=peanuts=merc;nozes=walnuts=merc;amêndoas=almonds=merc;pão ralado=breadcrumbs=merc;sopa=soup=merc;água=water=beb;sumo de laranja=orange juice=beb;sumo de maçã=apple juice=beb;asas de frango=chicken wings=talho;leite com chocolate=chocolate milk=lat;água com gás=sparkling water=beb;sumo=juice=beb;vinho=wine=beb;vinho tinto=red wine=beb;vinho branco=white wine=beb;espumante=sparkling wine=beb;cerveja=beer=beb;refrigerante=soda=beb;coca-cola=coke=beb;ice tea=iced tea=beb;detergente=detergent=lim;detergente da loiça=dish soap=lim;detergente da roupa=laundry detergent=lim;amaciador=fabric softener=lim;lixívia=bleach=lim;desinfetante=disinfectant=lim;limpa vidros=glass cleaner=lim;esponjas=sponges=lim;pastilhas da máquina=dishwasher tablets=lim;papel de cozinha=paper towels=lim;rolo de cozinha=kitchen roll=lim;guardanapos=napkins=lim;sacos do lixo=bin bags=lim;sacos=bags=lim;papel de alumínio=foil=lim;película aderente=cling film=lim;papel higiénico=toilet paper=hig;champô=shampoo=hig;condicionador=conditioner=hig;amaciador de cabelo=hair conditioner=hig;gel de banho=shower gel=hig;sabonete=soap=hig;pasta de dentes=toothpaste=hig;escova de dentes=toothbrush=hig;fio dental=dental floss=hig;elixir=mouthwash=hig;desodorizante=deodorant=hig;lâminas=razors=hig;espuma de barbear=shaving foam=hig;creme hidratante=moisturiser=hig;protetor solar=sunscreen=hig;pensos=plasters=hig;pensos higiénicos=sanitary pads=hig;tampões=tampons=hig;fraldas=nappies=hig;toalhitas=wipes=hig;cotonetes=cotton buds=hig;algodão=cotton wool=hig;lenços=tissues=hig`.split(';').map(s=>{const[p,e,c]=s.split('=');return{pt:p,en:e,sec:c}});
 const DEF=[['fv','Frutas e Legumes','Fruit & Veg'],['pad','Padaria','Bakery'],['talho','Talho','Butcher'],['peix','Peixaria','Fish'],['char','Charcutaria e Queijos','Deli & Cheese'],['lat','Laticínios','Dairy'],['cong','Congelados','Frozen'],['merc','Mercearia','Grocery'],['beb','Bebidas','Drinks'],['lim','Limpeza','Cleaning'],['hig','Higiene','Hygiene']];
 let S;try{S=JSON.parse(localStorage.getItem('pd')||'null')}catch(e){}
 if(!S)S={sections:DEF.map(d=>({id:d[0],pt:d[1],en:d[2]})),items:[],usual:[]};
 S.items.forEach((i,k)=>{if(!i.t)i.t=Date.now()+k});
+if(!S.learn)S.learn={};   // name → aisle, learned when you move an item to another aisle
 let tab='list',secEdit=null,rec=null;
 const save=()=>{try{localStorage.setItem('pd',JSON.stringify(S))}catch(e){}};
 // Remote sync hooks: no-ops until the Firebase module below connects (app still works fully offline/local).
@@ -94,14 +95,43 @@ function find(t){const n=norm(t);if(!n)return null;
   // singular/plural fallback: "laranjas"→laranja, "limões"→limão, "uva"→uvas
   for(const v of[n.replace(/oes$/,'ao'),n.replace(/aes$/,'ao'),n.replace(/es$/,''),n.replace(/s$/,''),n+'s'])if(v!==n&&(r=hit(v)))return r;
   return null}
+/* ---------- Automatic aisle ---------- */
+// "um pacote de leite" → name "leite", unit "pacote"
+const ART=/^(?:o|a|os|as|um|uma|uns|umas|the|some)\s+/i;
+const UNIT=/^(?:(?:meia\s+)?d[uú]zias?|pacotes?|garrafas?|latas?|embalage(?:m|ns)|caixas?|sacos?|frascos?|quilos?|kg|kilos?|litros?|gramas?|molhos?|cachos?|unidades?|packs?|bottles?|cans?|bags?|boxes?|jars?)\s+(?:de|do|da|dos|das|of)\s+/i;
+function core(t){let s=t.trim().replace(/[.!?]+$/,'').replace(ART,''),unit='';const m=s.match(UNIT);
+  if(m){unit=m[0].replace(/\s+(?:de|do|da|dos|das|of)\s+$/i,'').trim();s=s.slice(m[0].length).replace(ART,'')}return{name:s.trim(),unit}}
+// every dictionary name (PT and EN) as a whole-word pattern, longest first, to find "iogurte" in "iogurte natural"
+let IDX=null;
+const sing=n=>n.split(' ').map(w=>w.replace(/oes$/,'ao').replace(/aes$/,'ao')).join(' ');
+function idx(){if(IDX)return IDX;IDX=[];
+  DICT.forEach(d=>[[d.pt,1],[d.en,0]].forEach(([w,pt])=>{const n=norm(w);if(!n)return;
+    const p=n.split(' ').map(x=>x.replace(/[.*+?^${}()|[\]\\-]/g,'\\$&')+'(?:s|es)?').join('\\s+');
+    IDX.push({pt,re:new RegExp('(?:^|\\s)'+p+'(?=\\s|$)'),sec:d.sec})}));
+  return IDX}
+// The main word decides the aisle: first in Portuguese ("sumo de laranja" → drinks),
+// last in English ("orange juice" → drinks). Longer names win at the same spot ("pão de forma" over "pão").
+function guessSec(t){const n=' '+sing(norm(t).replace(/[^\p{L}\p{N}\s-]/gu,' ').replace(/\s+/g,' ').trim());
+  if(/\s(?:congelad[oa]s?|frozen)(?=\s|$)/.test(n))return'cong';
+  const hits=[];idx().forEach(x=>{const m=x.re.exec(n);if(m)hits.push({pt:x.pt,sec:x.sec,s:m.index,e:m.index+m[0].length})});
+  if(!hits.length)return null;
+  const pt=hits.filter(h=>h.pt);
+  const best=pt.length?pt.sort((a,b)=>a.s-b.s||b.e-a.e)[0]:hits.sort((a,b)=>b.e-a.e||a.s-b.s)[0];
+  return best.sec}
+function otherSec(){let s=S.sections.find(x=>x.id==='outros');
+  if(!s){s={id:'outros',pt:'Outros',en:'Other'};S.sections.push(s);R.field('sections')}return s.id}
+function autoSec(pt,f){const ok=id=>id&&S.sections.some(s=>s.id===id)?id:null;
+  return ok(S.learn[norm(pt)])||ok(f&&f.sec)||ok(guessSec(pt))||otherSec()}
+
 function addItem(text,secId,qty=1){
   text=text.trim();if(!text)return;
-  const f=find(text);
-  const pt=f?f.pt:text.charAt(0).toUpperCase()+text.slice(1);
+  const{name,unit}=core(text);if(!name)return;
+  const f=find(name);
+  const pt=f?f.pt:name.charAt(0).toUpperCase()+name.slice(1);
   const ex=S.items.find(i=>!i.done&&norm(i.pt)===norm(pt));
   if(ex){ex.qty+=qty;save();render();R.item(ex);return}
-  const sec=(secId&&secId!=='auto'?secId:(f&&S.sections.some(s=>s.id===f.sec)?f.sec:S.sections[0].id));
-  const it={id:uid(),sec,pt,en:f?f.en:'',qty,price:f&&f.price?f.price:0,note:'',done:false,t:Date.now()};
+  const sec=secId&&secId!=='auto'?secId:autoSec(pt,f);
+  const it={id:uid(),sec,pt,en:f?f.en:'',qty,price:f&&f.price?f.price:0,note:unit,done:false,t:Date.now()};
   S.items.push(it);save();render();R.item(it)}
 
 function render(remote){
@@ -179,11 +209,13 @@ function edit(id){
 function ok(id){
   const i=S.items.find(x=>x.id===id),d=$('dlg');
   if(!i){d.close();say('Este item foi apagado no outro telemóvel. · This item was deleted on the other phone.');return}
-  const u0=JSON.stringify(S.usual);
+  const u0=JSON.stringify(S.usual),sec0=i.sec;
   i.pt=$('e1').value.trim()||i.pt;i.en=$('e2').value.trim();i.qty=Math.max(1,parseInt($('e3').value)||1);i.price=parseFloat(String($('e4').value).replace(',','.'))||0;i.sec=$('e5').value;i.note=$('e6').value.trim();
   const k=S.usual.findIndex(u=>norm(u.pt)===norm(i.pt));
   if(d.dataset.u==='1'){const u={pt:i.pt,en:i.en,sec:i.sec,price:i.price};k>=0?S.usual[k]=u:S.usual.push(u)}else if(k>=0)S.usual.splice(k,1);
-  save();d.close();render();R.item(i);if(JSON.stringify(S.usual)!==u0)R.field('usual')}
+  // moved to another aisle → remember it, so next time this item goes straight there (on both phones)
+  const learnt=i.sec!==sec0;if(learnt)S.learn[norm(i.pt)]=i.sec;
+  save();d.close();render();R.item(i);if(JSON.stringify(S.usual)!==u0)R.field('usual');if(learnt)R.field('learn')}
 function del(id){S.items=S.items.filter(x=>x.id!==id);save();$('dlg').close();render();R.del([id])}
 
 function say(m,ms=6000){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',ms)}
@@ -262,7 +294,7 @@ let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache({tabManag
 
 const newId=()=>{const a='abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=crypto.getRandomValues(new Uint8Array(24));return[...r].map(x=>a[x%a.length]).join('')};
 const clean=i=>({id:i.id,sec:i.sec,pt:i.pt,en:i.en||'',qty:i.qty||1,price:i.price||0,note:i.note||'',done:!!i.done,t:i.t||Date.now()});
-const toDoc=()=>({v:1,sections:S.sections,usual:S.usual,items:Object.fromEntries(S.items.map(i=>[i.id,clean(i)]))});
+const toDoc=()=>({v:1,sections:S.sections,usual:S.usual,learn:S.learn,items:Object.fromEntries(S.items.map(i=>[i.id,clean(i)]))});
 
 const m=location.hash.match(/[#&]l=([A-Za-z0-9]{20,})/);
 let id=localStorage.getItem('pd-list'),joined=false;
@@ -288,7 +320,7 @@ onSnapshot(ref(),{includeMetadataChanges:true},snap=>{
     if(!off&&!joined&&!snap.metadata.hasPendingWrites&&!retried){retried=true;setDoc(ref(),toDoc()).catch(fail);return}
     if(!off&&joined)say('Lista partilhada não encontrada. Peça o link outra vez. · Shared list not found.',10000);return}
   const d=snap.data();
-  S={sections:d.sections||S.sections,usual:d.usual||[],items:Object.values(d.items||{}).sort((a,b)=>(a.t||0)-(b.t||0))};
+  S={sections:d.sections||S.sections,usual:d.usual||[],learn:d.learn||{},items:Object.values(d.items||{}).sort((a,b)=>(a.t||0)-(b.t||0))};
   save();render(true);
   if(first&&joined&&!off){first=false;say('Ligado à lista partilhada ✓ · Joined the shared list')}
 },fail);
