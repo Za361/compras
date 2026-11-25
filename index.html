@@ -55,11 +55,14 @@ label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
 @keyframes pulse{50%{opacity:.6}}
 #toast{position:fixed;left:12px;right:12px;bottom:70px;max-width:536px;margin:0 auto;background:var(--tx);color:var(--bg);padding:12px;border-radius:12px;z-index:9;font-size:14px;display:none}
 #inst{display:none;font-size:13px;padding:6px 10px}
+#shr{display:none;font-size:13px;padding:6px 10px;white-space:nowrap}
+#sy{font-size:12px;vertical-align:middle;color:var(--mu)}
+#sy.on{color:var(--ac)}
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="hd"><h1>🛒 Lista de Compras · Shopping List</h1><button class="ghost" id="inst">⤓ Instalar</button></div>
+<div class="hd"><h1>🛒 Lista de Compras · Shopping List <span id="sy" title="Sincronização · Sync">○</span></h1><button class="ghost" id="inst">⤓ Instalar</button><button class="ghost" id="shr" onclick="shareList()">👥 Partilhar</button></div>
 <div class="tabs" id="tabs"></div>
 <div id="view"></div>
 </div>
@@ -73,8 +76,11 @@ const DICT=`maçã=apple=fv;banana=banana=fv;laranja=orange=fv;limão=lemon=fv;t
 const DEF=[['fv','Frutas e Legumes','Fruit & Veg'],['pad','Padaria','Bakery'],['talho','Talho','Butcher'],['peix','Peixaria','Fish'],['char','Charcutaria e Queijos','Deli & Cheese'],['lat','Laticínios','Dairy'],['cong','Congelados','Frozen'],['merc','Mercearia','Grocery'],['beb','Bebidas','Drinks'],['lim','Limpeza','Cleaning'],['hig','Higiene','Hygiene']];
 let S;try{S=JSON.parse(localStorage.getItem('pd')||'null')}catch(e){}
 if(!S)S={sections:DEF.map(d=>({id:d[0],pt:d[1],en:d[2]})),items:[],usual:[]};
+S.items.forEach((i,k)=>{if(!i.t)i.t=Date.now()+k});
 let tab='list',secEdit=null,rec=null;
 const save=()=>{try{localStorage.setItem('pd',JSON.stringify(S))}catch(e){}};
+// Remote sync hooks: no-ops until the Firebase module below connects (app still works fully offline/local).
+const R={item(){},del(){},field(){}};
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
 const eur=n=>n.toFixed(2).replace('.',',')+' €';
@@ -93,17 +99,21 @@ function addItem(text,secId,qty=1){
   const f=find(text);
   const pt=f?f.pt:text.charAt(0).toUpperCase()+text.slice(1);
   const ex=S.items.find(i=>!i.done&&norm(i.pt)===norm(pt));
-  if(ex){ex.qty+=qty;save();render();return}
+  if(ex){ex.qty+=qty;save();render();R.item(ex);return}
   const sec=(secId&&secId!=='auto'?secId:(f&&S.sections.some(s=>s.id===f.sec)?f.sec:S.sections[0].id));
-  S.items.push({id:uid(),sec,pt,en:f?f.en:'',qty,price:f&&f.price?f.price:0,note:'',done:false});
-  save();render()}
+  const it={id:uid(),sec,pt,en:f?f.en:'',qty,price:f&&f.price?f.price:0,note:'',done:false,t:Date.now()};
+  S.items.push(it);save();render();R.item(it)}
 
-function render(){
+function render(remote){
+  // keep whatever is being typed when a remote update re-renders the screen
+  const keep=remote?['ni','ns','sp','se'].map(k=>{const e=$(k);return e&&[k,e.value]}).filter(Boolean):[],fo=remote&&document.activeElement&&document.activeElement.id;
   $('tabs').innerHTML=[['list','Lista · List'],['usual','Habituais · Usual'],['sec','Secções · Aisles']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="tab='${t[0]}';secEdit=null;render()">${t[1]}</button>`).join('');
   $('view').innerHTML=tab==='list'?vList():tab==='usual'?vUsual():vSec();
   const tot=S.items.reduce((a,i)=>a+i.qty*i.price,0),cart=S.items.filter(i=>i.done).reduce((a,i)=>a+i.qty*i.price,0);
   $('tt').textContent=eur(tot);$('tc').textContent=eur(cart);$('tcl').textContent=S.items.filter(i=>i.done).length+'/'+S.items.length;
-  if(tab==='sec'&&secEdit!==null){const f=$('sp');if(f){f.focus();f.closest('form').scrollIntoView({block:'nearest'})}}
+  keep.forEach(([k,v])=>{const e=$(k);if(e)e.value=v});
+  if(remote){if(fo&&$(fo))$(fo).focus()}
+  else if(tab==='sec'&&secEdit!==null){const f=$('sp');if(f){f.focus();f.closest('form').scrollIntoView({block:'nearest'})}}
 }
 function vList(){
   const opts=S.sections.map(s=>`<option value="${s.id}">${esc(secName(s))}</option>`).join('');
@@ -121,7 +131,7 @@ function vList(){
   return h}
 function vUsual(){
   if(!S.usual.length)return`<div class="empty">Ainda sem habituais.<br>Abra um item na lista e escolha ★.<br><small>No usual items yet. Open an item and tap ★.</small></div>`;
-  return S.usual.map((u,i)=>`<div class="sec"><div class="it" style="border:0"><div class="nm"><b>${esc(u.pt)}</b>${u.en?`<small>${esc(u.en)}</small>`:''}</div><div class="pr">${u.price?eur(u.price):''}</div><button class="btn" onclick="addU(${i})">+</button><button class="ghost" onclick="S.usual.splice(${i},1);save();render()">✕</button></div></div>`).join('')}
+  return S.usual.map((u,i)=>`<div class="sec"><div class="it" style="border:0"><div class="nm"><b>${esc(u.pt)}</b>${u.en?`<small>${esc(u.en)}</small>`:''}</div><div class="pr">${u.price?eur(u.price):''}</div><button class="btn" onclick="addU(${i})">+</button><button class="ghost" onclick="S.usual.splice(${i},1);save();render();R.field('usual')">✕</button></div></div>`).join('')}
 
 /* ---------- Aisles: in-page forms instead of prompt() ---------- */
 function vSec(){
@@ -142,18 +152,19 @@ function saveSec(e,i){
   e.preventDefault();const f=e.target.elements;
   const pt=f.pt.value.trim(),en=f.en.value.trim();if(!pt){f.pt.focus();return}
   if(i==='new')S.sections.push({id:uid(),pt,en});else Object.assign(S.sections[i],{pt,en});
-  secEdit=null;save();render()}
+  secEdit=null;save();render();R.field('sections')}
 function delSec(i,b){
   if(!b.dataset.c){b.dataset.c=1;b.textContent='Apagar? · Delete?';b.classList.add('warn');return}
   const s=S.sections[i],to=S.sections[i===0?1:0].id;
-  S.items.forEach(x=>{if(x.sec===s.id)x.sec=to});S.usual.forEach(x=>{if(x.sec===s.id)x.sec=to});
-  S.sections.splice(i,1);secEdit=null;save();render()}
-function mv(i,d){const j=i+d;if(j<0||j>=S.sections.length)return;[S.sections[i],S.sections[j]]=[S.sections[j],S.sections[i]];save();render()}
+  const moved=S.items.filter(x=>x.sec===s.id);moved.forEach(x=>x.sec=to);S.usual.forEach(x=>{if(x.sec===s.id)x.sec=to});
+  S.sections.splice(i,1);secEdit=null;save();render();
+  R.field('sections');R.field('usual');moved.forEach(x=>R.item(x))}
+function mv(i,d){const j=i+d;if(j<0||j>=S.sections.length)return;[S.sections[i],S.sections[j]]=[S.sections[j],S.sections[i]];save();render();R.field('sections')}
 
 function go(){const i=$('ni');addItem(i.value,$('ns').value);const n=$('ni');n.value='';n.focus()}
-function tog(id){const i=S.items.find(x=>x.id===id);i.done=!i.done;save();render()}
-function clearDone(){S.items=S.items.filter(i=>!i.done);save();render()}
-function addU(i){const u=S.usual[i];S.items.push({id:uid(),sec:S.sections.some(s=>s.id===u.sec)?u.sec:S.sections[0].id,pt:u.pt,en:u.en||'',qty:1,price:u.price||0,note:'',done:false});save();render();say('+ '+u.pt)}
+function tog(id){const i=S.items.find(x=>x.id===id);if(!i)return;i.done=!i.done;save();render();R.item(i)}
+function clearDone(){const ids=S.items.filter(i=>i.done).map(i=>i.id);S.items=S.items.filter(i=>!i.done);save();render();R.del(ids)}
+function addU(i){const u=S.usual[i];const it={id:uid(),sec:S.sections.some(s=>s.id===u.sec)?u.sec:S.sections[0].id,pt:u.pt,en:u.en||'',qty:1,price:u.price||0,note:'',done:false,t:Date.now()};S.items.push(it);save();render();R.item(it);say('+ '+u.pt)}
 
 function edit(id){
   const i=S.items.find(x=>x.id===id),d=$('dlg');
@@ -167,11 +178,13 @@ function edit(id){
   d.showModal()}
 function ok(id){
   const i=S.items.find(x=>x.id===id),d=$('dlg');
+  if(!i){d.close();say('Este item foi apagado no outro telemóvel. · This item was deleted on the other phone.');return}
+  const u0=JSON.stringify(S.usual);
   i.pt=$('e1').value.trim()||i.pt;i.en=$('e2').value.trim();i.qty=Math.max(1,parseInt($('e3').value)||1);i.price=parseFloat(String($('e4').value).replace(',','.'))||0;i.sec=$('e5').value;i.note=$('e6').value.trim();
   const k=S.usual.findIndex(u=>norm(u.pt)===norm(i.pt));
   if(d.dataset.u==='1'){const u={pt:i.pt,en:i.en,sec:i.sec,price:i.price};k>=0?S.usual[k]=u:S.usual.push(u)}else if(k>=0)S.usual.splice(k,1);
-  save();d.close();render()}
-function del(id){S.items=S.items.filter(x=>x.id!==id);save();$('dlg').close();render()}
+  save();d.close();render();R.item(i);if(JSON.stringify(S.usual)!==u0)R.field('usual')}
+function del(id){S.items=S.items.filter(x=>x.id!==id);save();$('dlg').close();render();R.del([id])}
 
 function say(m,ms=6000){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',ms)}
 
@@ -226,7 +239,57 @@ let instEv=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;$('inst').style.display='block'});
 $('inst').onclick=async()=>{if(!instEv)return;instEv.prompt();await instEv.userChoice.catch(()=>{});instEv=null;$('inst').style.display='none'};
 addEventListener('appinstalled',()=>{$('inst').style.display='none';say('Instalada ✓ · Installed')});
+
+/* ---------- Sharing ---------- */
+async function shareList(){
+  const id=localStorage.getItem('pd-list');if(!id){say('A ligar à nuvem… tente daqui a pouco. · Connecting, try again shortly.');return}
+  const url=location.origin+location.pathname+'#l='+id;
+  const text='A nossa lista de compras partilhada. Abra no Chrome e instale. · Our shared shopping list.';
+  try{if(navigator.share){await navigator.share({title:'Lista de Compras',text,url});return}}catch(e){if(e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(url);say('Link copiado ✓ Envie-o por WhatsApp. · Link copied, send it on WhatsApp.')}
+  catch(e){say(url,20000)}}
 render();
+</script>
+<script type="module">
+/* ---------- Live sync (Firebase Firestore) ----------
+   One Firestore document per shared list: lists/<random id>.
+   Items are stored as a map keyed by item id, so two phones editing different items never overwrite each other.
+   Firestore's own offline cache queues changes made without signal and sends them when back online. */
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js';
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,onSnapshot,setDoc,updateDoc,deleteField} from 'https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js';
+const app=initializeApp({apiKey:'AIzaSyD1IpABpldCYQWsV6pQJP3Tl5-5pTnheKo',authDomain:'compras-5ul6il.firebaseapp.com',projectId:'compras-5ul6il',storageBucket:'compras-5ul6il.firebasestorage.app',messagingSenderId:'754904962329',appId:'1:754904962329:web:a3c2f63eb78565661f6188'});
+let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){db=initializeFirestore(app,{})}
+
+const newId=()=>{const a='abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=crypto.getRandomValues(new Uint8Array(24));return[...r].map(x=>a[x%a.length]).join('')};
+const clean=i=>({id:i.id,sec:i.sec,pt:i.pt,en:i.en||'',qty:i.qty||1,price:i.price||0,note:i.note||'',done:!!i.done,t:i.t||Date.now()});
+const toDoc=()=>({v:1,sections:S.sections,usual:S.usual,items:Object.fromEntries(S.items.map(i=>[i.id,clean(i)]))});
+
+const m=location.hash.match(/[#&]l=([A-Za-z0-9]{20,})/);
+let id=localStorage.getItem('pd-list'),joined=false;
+if(m){joined=m[1]!==id;id=m[1];localStorage.setItem('pd-list',id);history.replaceState(null,'',location.pathname)}
+const ref=()=>doc(db,'lists',id);
+if(!id){id=newId();localStorage.setItem('pd-list',id);setDoc(ref(),toDoc()).catch(fail)}
+$('shr').style.display='block';
+
+const sy=$('sy');
+function fail(e){console.warn('sync',e);sy.className='';sy.textContent='○';sy.title='Sem sincronização · Not syncing: '+(e&&e.code||e)}
+R.item=i=>updateDoc(ref(),{['items.'+i.id]:clean(i)}).catch(fail);
+R.del=ids=>ids.length&&updateDoc(ref(),Object.fromEntries(ids.map(x=>['items.'+x,deleteField()]))).catch(fail);
+R.field=k=>updateDoc(ref(),{[k]:S[k]}).catch(fail);
+
+let first=true,retried=false;
+onSnapshot(ref(),{includeMetadataChanges:true},snap=>{
+  const off=snap.metadata.fromCache;
+  sy.className=off?'':'on';sy.textContent='●';sy.title=off?'Offline: alterações serão enviadas depois · changes will sync later':'Sincronizado · Synced';
+  if(!snap.exists()){
+    // our own list never reached the server (e.g. first upload failed): upload this phone's copy now
+    if(!off&&!joined&&!snap.metadata.hasPendingWrites&&!retried){retried=true;setDoc(ref(),toDoc()).catch(fail);return}
+    if(!off&&joined)say('Lista partilhada não encontrada. Peça o link outra vez. · Shared list not found.',10000);return}
+  const d=snap.data();
+  S={sections:d.sections||S.sections,usual:d.usual||[],items:Object.values(d.items||{}).sort((a,b)=>(a.t||0)-(b.t||0))};
+  save();render(true);
+  if(first&&joined&&!off){first=false;say('Ligado à lista partilhada ✓ · Joined the shared list')}
+},fail);
 </script>
 </body>
 </html>
